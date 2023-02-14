@@ -7,7 +7,6 @@ from utils import compute_rmse
 from encoders import DistanceTransformer, TimeFeaturesEncoder
 from sklearn.model_selection import train_test_split
 from data import get_data, clean_data
-import mlflow
 from mlflow.tracking import MlflowClient
 from memoized_property import memoized_property
 
@@ -15,13 +14,12 @@ from memoized_property import memoized_property
 class Trainer():
 
     def __init__(self, X,y):
-       self.pipeline = None
        self.X = X
        self.y = y 
        self.experiment_name = 'test_experiment'
+       self.mlflow_client = MlflowClient()
 
     def set_pipeline(self):
-    
         dist_pipe = Pipeline([('dist_trans', DistanceTransformer()),('stdscaler', StandardScaler())])
         time_pipe = Pipeline([('time_enc', TimeFeaturesEncoder()),('ohe', OneHotEncoder(handle_unknown='ignore'))])
         preproc_pipe = ColumnTransformer(transformers=[
@@ -33,23 +31,18 @@ class Trainer():
         return pipeline
     
     def run(self):
-        self.pipeline = self.set_pipeline()
+        pipeline = self.set_pipeline()
         '''returns a trained pipelined model'''
-        ppl = self.pipeline.fit(self.X, self.y)
-        return ppl
+        trained_pipeline = pipeline.fit(self.X, self.y)
+        return trained_pipeline
     
-    def evaluate(self,X_test, y_test):
+    def evaluate(self,X_test, y_test, trained_pipeline):
         '''returns the value of the RMSE'''
-        y_pred = self.pipeline.predict(X_test)
+        y_pred = trained_pipeline.predict(X_test)
         y_test = y_test.values
         rmse = compute_rmse(y_pred, y_test)
         print(rmse)
         return rmse
-    
-
-    @memoized_property
-    def mlflow_client(self):
-        return MlflowClient()
 
     @memoized_property
     def mlflow_experiment_id(self):
@@ -68,7 +61,6 @@ class Trainer():
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
 
-
 if __name__ == "__main__":
 
     raw_data = get_data()
@@ -81,7 +73,12 @@ if __name__ == "__main__":
 
     trainer = Trainer(X_train, y_train)
 
-    trainer.run()
-    trainer.evaluate(X_val, y_val)
+    trained_pipeline = trainer.run()
+    
+    rmse = trainer.evaluate(X_val, y_val, trained_pipeline)
 
-    trainer.mlflow.start_run()
+    model = trained_pipeline.steps[1][0]
+    
+    trainer.mlflow_log_param("model", model)
+    trainer.mlflow_log_metric( "rmse",  rmse)
+
