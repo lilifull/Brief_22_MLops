@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def get_data(nrows=10000):
-    df = pd.read_csv('TaxiFareModel/data/train.csv', nrows=nrows)
+    df = pd.read_csv('data/train.csv', nrows=nrows)
     return df
 
 def clean_data(df, test=False):

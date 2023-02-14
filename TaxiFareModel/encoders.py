@@ -22,9 +22,10 @@ class DistanceTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X['distance'] = haversine_vectorized(X)
+        X_ = X.copy()
+        X_['distance'] = haversine_vectorized(X)
     
-        return X[['distance']]
+        return X_[['distance']]
     
 
 # Create dow, hour, month, year, columns
@@ -41,5 +42,6 @@ class TimeFeaturesEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = extract_time_features(X)
-        return X[['dow','hour', 'month', 'year']]
+        X_ = X.copy()
+        X_ = extract_time_features(X)
+        return X_[['dow','hour', 'month', 'year']]
