@@ -1,0 +1,10 @@
+TaxiFareModel/data
+__pycache__
+*.py[cod]
+.DS_Store
+*.ipynb_checkpoints
+*.csv
+TaxiFareModel/mlruns
+TaxiFareModel/Notebooks/mlruns
+TaxiFareModel/Notebooks/iris.txt
+TaxiFareModel/.vscode
